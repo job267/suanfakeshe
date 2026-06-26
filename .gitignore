@@ -1,0 +1,55 @@
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+pytest-cache-files-*/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments and local Python tooling
+.venv/
+venv/
+env/
+ENV/
+conda-meta/
+pip-wheel-metadata/
+
+# Build and package artifacts
+build/
+dist/
+*.egg-info/
+*.spec
+
+# Local IDE/editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS metadata
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Codex/agent local metadata
+.agents/
+.codex/
+
+# Generated reports, charts, caches, and temporary outputs
+outputs/
+
+# Logs and temporary files
+*.log
+*.tmp
+*.bak
+*.orig
+
+# Keep project source/assets/maps tracked:
+# - src/
+# - gui/
+# - gui/images/
+# - map/
+# - tests/
