@@ -28,6 +28,11 @@ pip install -r "requirements.txt"
 run_ai_player.bat
 ```
 
+
+venv 环境：
+run_ai_player_venv.bat
+
+
 常用模式：
 
 ```bat
