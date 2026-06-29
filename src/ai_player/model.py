@@ -36,6 +36,7 @@ TILE_NAMES = {
 
 COIN_VALUE = 50
 TRAP_VALUE = -30
+TRAP_COIN_COST = 1
 
 
 @dataclass(frozen=True)

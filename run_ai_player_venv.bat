@@ -8,22 +8,11 @@ set "VENV_DIR=.venv"
 set "PYTHON_EXE=%VENV_DIR%\Scripts\python.exe"
 
 if not exist "%PYTHON_EXE%" (
-    echo [venv] Creating virtual environment: %VENV_DIR%
-    py -3 -m venv "%VENV_DIR%"
-    if errorlevel 1 (
-        python -m venv "%VENV_DIR%"
-    )
-    if errorlevel 1 (
-        echo [venv] Failed to create virtual environment.
-        echo Please make sure Python is installed and available as "py" or "python".
-        exit /b 1
-    )
-
-    echo [venv] Installing dependencies from requirements.txt
-    "%PYTHON_EXE%" -m pip install --upgrade pip
-    if errorlevel 1 exit /b 1
-    "%PYTHON_EXE%" -m pip install -r requirements.txt
-    if errorlevel 1 exit /b 1
+    echo [venv] Virtual environment not found: %PYTHON_EXE%
+    echo Please create it and install dependencies before running this script:
+    echo   py -3 -m venv .venv
+    echo   .venv\Scripts\python.exe -m pip install -r requirements.txt
+    exit /b 1
 )
 
 set "MODE=%~1"

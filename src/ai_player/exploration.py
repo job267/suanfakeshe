@@ -8,6 +8,7 @@ from .model import (
     ROAD,
     START,
     TRAP,
+    TRAP_COIN_COST,
     TRAP_VALUE,
     AlgorithmResult,
     BattleEvent,
@@ -84,7 +85,11 @@ class ExplorationRunner:
         )
 
     def _decide_with_degradation(self) -> Decision:
-        if self.degrade_level == 1 and self.no_resource_steps >= self.degrade_threshold:
+        if (
+            self.degrade_level == 1
+            and self.no_resource_steps >= self.degrade_threshold
+            and not isinstance(self.strategy, GreedyStrategy)
+        ):
             self._activate_degradation(2, AstarStrategy(), f"连续{self.no_resource_steps}步资源无增长，降级为A*直通终点")
 
         decision = self.active_strategy.decide(
@@ -93,6 +98,7 @@ class ExplorationRunner:
             self.collected_coins,
             self.triggered_traps,
             matrix=self.matrix,
+            coin_balance=self.coin_balance,
         )
         if decision.next_pos == self.position and self.degrade_level < 3:
             self._activate_degradation(3, BfsStrategy(), "当前策略无法移动，降级为BFS兜底路径")
@@ -102,6 +108,7 @@ class ExplorationRunner:
                 self.collected_coins,
                 self.triggered_traps,
                 matrix=self.matrix,
+                coin_balance=self.coin_balance,
             )
         return decision
 
@@ -142,9 +149,16 @@ class ExplorationRunner:
             self.message = f"拾取金币 +{COIN_VALUE}，金币余额 {self.coin_balance}"
         elif tile == TRAP:
             self.score += TRAP_VALUE
+            coin_loss = min(self.coin_balance, TRAP_COIN_COST)
+            if coin_loss:
+                self.coin_balance -= coin_loss
+                self.score -= coin_loss * COIN_VALUE
             self.triggered_traps.add(next_pos)
             self.maze.set_tile(next_pos, ROAD, self.matrix)
-            self.message = f"触发陷阱 {TRAP_VALUE}"
+            if coin_loss:
+                self.message = f"触发陷阱 {TRAP_VALUE}，扣除金币 {coin_loss}，金币余额 {self.coin_balance}"
+            else:
+                self.message = f"触发陷阱 {TRAP_VALUE}，无金币可扣"
         elif tile == BOSS and next_pos not in self.cleared_bosses:
             self.message = self._handle_boss(next_pos)
         elif tile == START:

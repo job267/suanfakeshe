@@ -38,6 +38,7 @@ class QLearningPolicyStrategy(ExplorationStrategy):
         collected_coins: set[Pos],
         triggered_traps: set[Pos],
         matrix: list[list[int]] | None = None,
+        coin_balance: int = 0,
     ) -> Decision:
         self.visit_count[position] = self.visit_count.get(position, 0) + 1
         if self.visit_count[position] > 2:

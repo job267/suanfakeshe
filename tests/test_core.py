@@ -21,7 +21,7 @@ def test_parse_external_json() -> None:
     assert maze.width == 15
     assert maze.start == (1, 1)
     assert maze.end == (13, 13)
-    assert maze.total_coins == 5
+    assert maze.total_coins == 7
     assert maze.boss_count() == 2
     assert len(maze.skills) == 4
 
@@ -51,10 +51,10 @@ def test_full_exploration_runs_to_end() -> None:
     result = run_full(maze, strategy=get_strategy("Greedy"))
     assert result.reached_end
     assert result.maze_steps > 0
-    assert result.boss_defeated == 2
-    assert result.boss_rounds == 12
-    assert result.coin_balance == 1
-    assert len(result.boss_results) == 2
+    assert result.boss_defeated == 1
+    assert result.boss_rounds == 5
+    assert result.coin_balance == 2
+    assert len(result.boss_results) == 1
     assert any(snapshot.battle_event for snapshot in result.snapshots)
 
 
@@ -83,6 +83,61 @@ def test_local_3x3_greedy_cases() -> None:
     assert len(summary.results) == 3
     assert [item.picked_value for item in summary.results] == [50, 50, 0]
     assert round(summary.average_picked_value, 2) == 33.33
+
+
+def test_greedy_prioritizes_boss_revive_reserve() -> None:
+    maze = MazeLoader.from_layout(
+        "boss_reserve",
+        [
+            "#######",
+            "#S B E#",
+            "# #####",
+            "#G#####",
+            "#######",
+        ],
+        boss_hps=[5],
+        skills=[Skill("技能-0", 1, 0)],
+        min_rounds=1,
+        coin_consumption=1,
+    )
+    decision = get_strategy("Greedy").decide(maze, maze.start, set(), set(), coin_balance=0)
+    assert decision.next_pos == (2, 1)
+    assert decision.selected_target.startswith("储备金币")
+
+
+def test_greedy_avoids_optional_boss() -> None:
+    maze = MazeLoader.from_layout(
+        "optional_boss",
+        [
+            "#######",
+            "#S B E#",
+            "#     #",
+            "#######",
+        ],
+        boss_hps=[5],
+    )
+    result = run_full(maze, strategy=get_strategy("Greedy"))
+    assert result.reached_end
+    assert result.boss_defeated == 0
+    assert result.boss_rounds == 0
+    assert any("绕开BOSS" in snapshot.message for snapshot in result.snapshots)
+
+
+def test_trap_deducts_coin_balance() -> None:
+    maze = MazeLoader.from_layout(
+        "trap_coin_cost",
+        [
+            "######",
+            "#SGTE#",
+            "######",
+        ],
+    )
+    result = run_full(maze, strategy=get_strategy("Greedy"))
+    assert result.reached_end
+    assert result.traps_triggered == 1
+    assert result.coin_balance == 0
+    assert result.total_score == -30
+    assert any("扣除金币 1" in snapshot.message for snapshot in result.snapshots)
 
 
 def test_batch_boundary_maps() -> None:
@@ -130,18 +185,21 @@ def test_q_learning_registered_as_strategy() -> None:
     assert result.reached_end
 
 
-def test_auto_degrades_after_no_resource_growth() -> None:
+def test_greedy_keeps_scanning_after_no_resource_growth() -> None:
     maze = MazeLoader.from_layout(
-        "long_no_resource",
+        "long_delayed_coin",
         [
-            "######################",
-            "#S                  E#",
-            "######################",
+            "####################",
+            "#S                E#",
+            "#           G      #",
+            "####################",
         ],
     )
     result = run_full(maze, strategy=get_strategy("Greedy"))
     assert result.reached_end
-    assert "Layer2" in result.strategy_name
+    assert result.strategy_name == "Greedy"
+    assert result.coins_collected == 1
+    assert not any("Layer 2" in snapshot.message for snapshot in result.snapshots)
 
 
 def test_evaluate_maze() -> None:

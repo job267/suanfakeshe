@@ -18,6 +18,7 @@ class ExplorationStrategy(ABC):
         collected_coins: set[Pos],
         triggered_traps: set[Pos],
         matrix: list[list[int]] | None = None,
+        coin_balance: int = 0,
     ) -> Decision:
         raise NotImplementedError
 
@@ -35,6 +36,7 @@ class GreedyStrategy(ExplorationStrategy):
         collected_coins: set[Pos],
         triggered_traps: set[Pos],
         matrix: list[list[int]] | None = None,
+        coin_balance: int = 0,
     ) -> Decision:
         return greedy_decide(
             maze,
@@ -43,6 +45,7 @@ class GreedyStrategy(ExplorationStrategy):
             triggered_traps=triggered_traps,
             radius=self.radius,
             matrix=matrix,
+            coin_balance=coin_balance,
         )
 
 
@@ -56,6 +59,7 @@ class AstarStrategy(ExplorationStrategy):
         collected_coins: set[Pos],
         triggered_traps: set[Pos],
         matrix: list[list[int]] | None = None,
+        coin_balance: int = 0,
     ) -> Decision:
         path = astar_path(maze, position, maze.end, matrix=matrix)
         return Decision(
@@ -76,6 +80,7 @@ class BfsStrategy(ExplorationStrategy):
         collected_coins: set[Pos],
         triggered_traps: set[Pos],
         matrix: list[list[int]] | None = None,
+        coin_balance: int = 0,
     ) -> Decision:
         path = bfs_path(maze, position, maze.end, matrix=matrix)
         return Decision(
@@ -96,6 +101,7 @@ class DijkstraStrategy(ExplorationStrategy):
         collected_coins: set[Pos],
         triggered_traps: set[Pos],
         matrix: list[list[int]] | None = None,
+        coin_balance: int = 0,
     ) -> Decision:
         path = dijkstra_path(maze, position, maze.end, matrix=matrix)
         return Decision(
@@ -116,6 +122,7 @@ class AdaptiveStrategy(ExplorationStrategy):
         collected_coins: set[Pos],
         triggered_traps: set[Pos],
         matrix: list[list[int]] | None = None,
+        coin_balance: int = 0,
     ) -> Decision:
         greedy = greedy_decide(
             maze,
@@ -124,6 +131,7 @@ class AdaptiveStrategy(ExplorationStrategy):
             triggered_traps=triggered_traps,
             radius=1,
             matrix=matrix,
+            coin_balance=coin_balance,
         )
         if greedy.selected_target:
             return Decision(
@@ -159,6 +167,7 @@ class QLearningStrategy(ExplorationStrategy):
         collected_coins: set[Pos],
         triggered_traps: set[Pos],
         matrix: list[list[int]] | None = None,
+        coin_balance: int = 0,
     ) -> Decision:
         key = (maze.name, maze.height, maze.width)
         if self._policy is None or self._trained_key != key:
@@ -167,7 +176,14 @@ class QLearningStrategy(ExplorationStrategy):
             q_table = train_q_table(maze, QLearningConfig(episodes=800))
             self._policy = QLearningPolicyStrategy(q_table)
             self._trained_key = key
-        return self._policy.decide(maze, position, collected_coins, triggered_traps, matrix=matrix)
+        return self._policy.decide(
+            maze,
+            position,
+            collected_coins,
+            triggered_traps,
+            matrix=matrix,
+            coin_balance=coin_balance,
+        )
 
 
 STRATEGY_FACTORIES = {
